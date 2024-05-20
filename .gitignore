@@ -6,3 +6,5 @@
 
 # Исключить main.cpp из игнорируемых файлов
 !main.cpp
+!CMakeLists.txt
+!start.sh
