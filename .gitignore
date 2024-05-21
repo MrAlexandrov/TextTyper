@@ -7,4 +7,5 @@
 # Исключить main.cpp из игнорируемых файлов
 !main.cpp
 !CMakeLists.txt
+!README.md
 !start.sh

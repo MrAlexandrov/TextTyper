@@ -6,7 +6,7 @@ cmake .
 # Выполнение сборки
 if make; then
     # Если make завершилось успешно, запускаем исполняемый файл
-    ./main
+    ./main text.txt
 else
     # Если make завершилось с ошибкой, выводим сообщение и не запускаем ./main
     echo "Build failed, not running ./main"
