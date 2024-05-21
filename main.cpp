@@ -9,6 +9,7 @@
 #include <fstream>      // Для работы с файлами
 #include <filesystem>   // Для проверки наличия файла
 #include <algorithm>    // Для std::max
+#include <cctype>       // Для использования std::isdigit, std::isalpha и т.д.
 // #include <locale>
 // #include <codecvt>
 
@@ -118,27 +119,14 @@ public:
 
 class TypingTest {
 private:
-    // TODO: Maybe add some more symbols
-    const std::string symbols = "!@#$%^&*()[]<>_+ '\",.:;/~";
-
-    const std::vector <int> keySymbols = {KEY_BACKSPACE};
+    const std::vector <int> key_symbols = {KEY_BACKSPACE};
     // TODO: Add Ctrl+Backspace handler
     bool check(int ch) const {
-        if ('a' <= ch && ch <= 'z') return true;
-        if ('A' <= ch && ch <= 'Z') return true;
-        if ('0' <= ch && ch <= '9') return true;
-        for (char i : symbols) {
-            if (i == ch) {
-                return true;
-            }
-        }
-        for (int i : keySymbols) {
-            if (i == ch) {
-                return true;
-            }
+        if (std::isalnum(ch) || std::ispunct(ch) || std::isspace(ch) || (std::find(key_symbols.begin(), key_symbols.end(), ch) != key_symbols.end())) {
+            return true;
         }
         return false;
-    }  
+    }
 
 public:
     void run_typing_test(const TextProvider& tp) const {
