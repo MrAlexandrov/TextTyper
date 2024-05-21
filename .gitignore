@@ -1,10 +1,39 @@
-# Игнорировать все файлы
-*
+# Prerequisites
+*.d
 
-# Но не игнорировать каталог .gitignore, чтобы правила игнорирования применялись ко всем файлам, кроме main.cpp
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
 
-# Исключить main.cpp из игнорируемых файлов
-!src/*.cpp
-!CMakeLists.txt
-!README.md
-!start.sh
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+.vscode
+CMakeFiles
+temp
+.myvimrcold
+cmake_install.cmake
+CMakeCache.txt
