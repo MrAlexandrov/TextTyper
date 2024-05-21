@@ -1,11 +1,15 @@
 #include <iostream>
 #include <curses.h>
-#include <string>
-#include <chrono>
-#include <vector>
-#include <fstream> // Для перенаправления вывода std::clog
-#include <cassert>
-#include <sstream>
+#include <string>       // Для использования std::string
+#include <chrono>       // Для использования std::chrono
+#include <vector>       // Для использования std::vector
+#include <fstream>      // Для перенаправления вывода std::clog
+#include <cassert>      // Для использования assert
+#include <sstream>      // Для использования std::stringstream
+#include <fstream>      // Для работы с файлами
+#include <filesystem>   // Для проверки наличия файла
+#include <algorithm>    // Для std::max
+
 // TODO: Maybe add some more symbols
 std::string symbols = "!@#$%^&*()_+ '\",.:;";
 
@@ -27,41 +31,6 @@ bool check(int ch) {
     }
     return false;
 }   
-
-std::vector <std::string> separate(const std::string Text, const int& width) {
-    std::vector <std::string> words;
-    std::stringstream line(Text);
-    std::string word;
-    while (line >> word) {
-        words.push_back(word);
-    }
-    #ifdef DEBUG
-    std::clog << "words.size() = " << words.size() << '\n';
-    #endif
-    for (int i = 0; i < words.size(); ++i) {
-        if (width < words[i].size()) {
-            std::clog << "Can't separate the text\n";
-            return {};
-        }
-    }
-    std::clog << "Text can be separated\n";
-    for (std::string i : words) {
-        std::clog << i << '\n';
-    }
-    std::vector <std::string> lines;
-    for (auto&& current_word : words) {
-        if (lines.empty() || lines.back().size() + 1 + current_word.size() > width) {
-            lines.push_back(current_word);
-        } else {
-            lines.back() += ' ';
-            lines.back() += current_word;
-        }
-    }
-    for (int i = 0; i < lines.size() - 1; ++i) {
-        lines[i] += ' ';
-    }
-    return lines;
-}
 
 // Класс для измерения времени
 class Timer {
@@ -90,7 +59,77 @@ public:
     }
 };
 
-void runTypingTest(const std::string& target_text) {
+class TextProvider {
+private:
+    std::string text;
+    std::vector <std::string> words;
+    int max_length_word = 0;
+
+public:
+    TextProvider() {}
+    TextProvider(const std::string& source) {
+        try {
+            get_text(source);
+        } catch (const std::runtime_error& error) {
+            std::cerr << "Error: " << error.what() << std::endl;
+        }
+    }
+
+    void get_text(const std::string& source) {
+        if (std::filesystem::exists(source)) {
+            get_text_from_file(source);
+        } else {
+            get_text_from_string(source);
+        }
+        parse_words();
+    }
+
+    void get_text_from_string(const std::string& str) {
+        text = str;
+    }
+
+    void get_text_from_file(const std::string& filename) {
+        std::ifstream infile(filename);
+        if (!infile) {
+            throw std::runtime_error("Error opening file: " + filename);
+        }
+
+        std::stringstream buffer;
+        buffer << infile.rdbuf();
+        text = buffer.str();
+    }
+
+    void parse_words() {
+        std::stringstream full_text(text);
+        std::string word;
+        while (full_text >> word) {
+            words.push_back(word);
+            max_length_word = std::max(max_length_word, static_cast<int>(word.size()));
+        }
+    }
+
+    // The assumption is that an extra space in a line won't hurt anything; 
+    // otherwise, we'd have to handle such an incredibly rare edge case
+    std::vector <std::string> placement(const int& width) const {
+        if (width < max_length_word) {
+            throw std::runtime_error("Error, cannot place words in such width.");
+        }
+        std::vector <std::string> lines;
+        for (const std::string& current_word : words) {
+            if (lines.empty() || lines.back().size() + 1 + current_word.size() > width) {
+                lines.push_back(current_word + ' ');
+            } else {
+                lines.back() += current_word + ' ';
+            }
+        }
+        assert(lines.size() > 0 && lines[0].size() > 0);
+        assert(lines[0].back() == ' ');
+        lines[0].pop_back();
+        return lines;
+    }
+};
+
+void run_typing_test(const TextProvider& tp) {
     enum symbolType {
         COMMON = 1, CORRECT, INCORRECT 
     };   
@@ -101,7 +140,13 @@ void runTypingTest(const std::string& target_text) {
     getmaxyx(stdscr, yMax, xMax); // Получаем размеры экрана
     int height, width = xMax * 0.8;
     std::clog << "width = " << width << '\n';
-    std::vector <std::string> text = separate(target_text, width);
+    std::vector <std::string> text;
+    try {
+        text = tp.placement(width);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "Error: " << error.what() << std::endl;
+        return;
+    }
     if (text.empty()) {
         return;
     }
@@ -236,11 +281,15 @@ void runTypingTest(const std::string& target_text) {
     int key = getch();
     if (key == '\n') {
         // Пользователь решает повторить тест
-        runTypingTest(target_text);
+        run_typing_test(tp);
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cout << "Can't find text\nUsage ./main \"filename\"\n";
+        return 0;
+    }
     std::ofstream logFile("program.log");
     std::streambuf* oldClogBuffer = std::clog.rdbuf(logFile.rdbuf());
 
@@ -254,14 +303,13 @@ int main() {
     curs_set(0); // Скрываем курсор
     std::clog << "Initialization end\n"; 
 
-    // TODO: Add the ability to type text from a file
     // TODO: Add the ability to customize the window for text and text under the window
     // Определяем текст для набора
-    // std::string target_text = "The quick brown fox jumps over the lazy dog near the riverbank while the sun sets behind the hills, casting a golden glow across the serene landscape; meanwhile, in the bustling city, cars honk and people rush through the crowded streets, oblivious to the tranquil scene unfolding just a few miles away, where birds chirp melodiously and a gentle breeze rustles the leaves of ancient trees, creating a harmonious symphony that contrasts sharply with the cacophony of urban life, reminding us that peace and chaos coexist in the world, each with its unique beauty and rhythm, as night falls and stars begin to twinkle in the vast sky above.";
-    std::string target_text = "The quick brown fox jumps over the lazy dog near the riverbank while the sun sets behind the hills, casting";
-    std::clog << "runTypingTest\n";
+    std::clog << "run_typing_test\n";
     // Запускаем тест на набор текста
-    runTypingTest(target_text);
+    std::clog << "Target file: " << argv[1] << std::endl;
+    TextProvider text(argv[1]);
+    run_typing_test(text);
 
     // Завершаем ncurses
     endwin();

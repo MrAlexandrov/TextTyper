@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.10)
 # Название проекта
 project(TextTyper)
 
-# Установить стандарт C++
-set(CMAKE_CXX_STANDARD 11)
+# Установить стандарт C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Определить компиляторские флаги
