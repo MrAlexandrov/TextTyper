@@ -1,0 +1,27 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ main ]  # Можно указать ветку, с которой работает workflow
+  pull_request:
+    branches: [ main ]  # Можно указать ветку, с которой работает workflow
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Используем Ubuntu для сборки
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2  # Действие для клонирования репозитория
+
+    - name: Set up CMake
+      uses: lukka/get-cmake@v1  # Получаем установленный CMake
+
+    - name: Configure CMake
+      run: cmake -S . -B ${CMAKE_BINARY_DIR}/temp  # Настройка проекта с помощью CMake, результаты сохраняются в папке temp
+
+    - name: Build
+      run: cmake --build ${CMAKE_BINARY_DIR}/temp  # Сборка проекта с помощью CMake
+
+    - name: Run executable
+      run: ${CMAKE_BINARY_DIR}/temp/main  # Запуск исполняемого файла
