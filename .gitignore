@@ -2,10 +2,9 @@
 *
 
 # Но не игнорировать каталог .gitignore, чтобы правила игнорирования применялись ко всем файлам, кроме main.cpp
-!.gitignore
 
 # Исключить main.cpp из игнорируемых файлов
-!main.cpp
+!src/*.cpp
 !CMakeLists.txt
 !README.md
 !start.sh
