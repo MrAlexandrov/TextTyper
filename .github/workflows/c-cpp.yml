@@ -2,9 +2,9 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -12,12 +12,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: configure
-      run: ./configure
-    - name: make
-      run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+    - uses: actions/checkout@v2
+
+    - name: Set up CMake
+      uses: actions/setup-cmake@v1
+      with:
+        cmake-version: '3.10'
+
+    - name: Configure CMake
+      run: cmake -B build
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Test
+      run: ctest -C Release --output-on-failure
+
+    - name: Install ncurses
+      run: sudo apt-get install libncurses-dev
+
+    - name: Run main.cpp
+      run: ./build/main
