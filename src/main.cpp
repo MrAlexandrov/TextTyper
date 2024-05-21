@@ -294,7 +294,7 @@ public:
         cbreak();
         noecho();
         keypad(stdscr, TRUE);
-        // curs_set(0); // Скрываем курсор
+        curs_set(0); // Скрываем курсор
     }
     ~CursesWrapper() {
         endwin();
